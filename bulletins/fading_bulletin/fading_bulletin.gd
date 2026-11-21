@@ -2,18 +2,18 @@ extends Bulletin
 class_name FadingBulletin
 
 
-const TRANSPARENT_COLOR = Color(0, 0, 0, 0)
-const BG_NORMAL_COLOR = Color(0, 0, 0, 0.7)
-const BG_FADE_TIME = 0.25
+const TRANSPARENT_COLOR := Color(0, 0, 0, 0)
+const BG_NORMAL_COLOR := Color(0, 0, 0, 0.7)
+const BG_FADE_TIME := 0.25
 
 @onready var background: ColorRect = $ColorRect
 
 
 func _ready() -> void:
-	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	background.color = TRANSPARENT_COLOR
 	fade_in()
-	EventSystem.HUD_hide_hud.emit()
+	EventSystem.hud_visibility_requested.emit(false)
 
 
 func fade_in() -> void:
@@ -27,4 +27,4 @@ func fade_out() -> void:
 
 
 func destroy_self() -> void:
-	EventSystem.BUL_destroy_bulletin.emit(BulletinConfig.Keys.PauseMenu)
+	Bulletins.destroy(bulletin_key)

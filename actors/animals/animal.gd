@@ -20,7 +20,7 @@ var state := States.Idle
 @onready var wander_timer: Timer = $Timers/WanderTimer
 @onready var disappear_after_death_timer: Timer = $Timers/DisappearAfterDeathTimer
 @onready var flee_timer: Timer = $Timers/FleeTimer
-@onready var player:CharacterBody3D = get_tree().get_first_node_in_group("Player")
+@onready var player: Player = get_tree().get_first_node_in_group("Player")
 
 @onready var main_collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var meat_spawn_marker: Marker3D = $MeatSpawnMarker
@@ -33,8 +33,8 @@ var state := States.Idle
 @export var normal_speed := 0.6
 @export var alarmed_speed := 1.8
 @export var max_health := 80
-@export var idle_animations:Array[String] = []
-@export var hurt_animations:Array[String] = []
+@export var idle_animations: Array[String] = []
+@export var hurt_animations: Array[String] = []
 @export var turn_speed_weight := 0.07
 @export var min_idle_time := 2.0
 @export var max_idle_time := 7.0
@@ -42,7 +42,7 @@ var state := States.Idle
 @export var max_wander_time := 4.0
 @export var flee_time := 3.0
 @export var is_aggressive := false
-@export var attack_distance = 2.0
+@export var attack_distance := 2.0
 @export var damage := 20.0
 @export var vision_range := 15.0
 @export var vision_fov := 80.0
@@ -54,11 +54,11 @@ var player_in_vision_range := false
 
 
 func _ready() -> void:
-	animation_player.animation_finished.connect(animation_finished)
+	animation_player.animation_finished.connect(_on_animation_finished)
 	vision_area_collision_shape.shape.radius = vision_range
 
 
-func animation_finished(_anim_name : String) -> void:
+func _on_animation_finished(_anim_name: StringName) -> void:
 	if state == States.Idle:
 		animation_player.play(idle_animations.pick_random(), ANIM_BLEND_TIME)
 	
@@ -69,25 +69,22 @@ func animation_finished(_anim_name : String) -> void:
 		else:
 			set_state(States.Chase)
 	
-	if state == States.Attack:
+	elif state == States.Attack:
 		set_state(States.Chase)
 
 
 func _physics_process(_delta: float) -> void:
-	if state == States.Idle:
-		idle_loop()
-	
-	elif state == States.Wander:
-		wander_loop()
-	
-	elif state == States.Flee:
-		flee_loop()
-	
-	elif state == States.Chase:
-		chase_loop()
-	
-	elif state == States.Attack:
-		attack_loop()
+	match state:
+		States.Idle:
+			idle_loop()
+		States.Wander:
+			wander_loop()
+		States.Flee:
+			flee_loop()
+		States.Chase:
+			chase_loop()
+		States.Attack:
+			attack_loop()
 
 
 func idle_loop() -> void:
@@ -120,14 +117,15 @@ func chase_loop() -> void:
 	nav_agent.target_position = player.global_position
 	var dir := global_position.direction_to(nav_agent.get_next_path_position())
 	dir.y = 0
-	velocity.x = dir.normalized().x * alarmed_speed
-	velocity.z = dir.normalized().z * alarmed_speed
+	dir = dir.normalized()
+	velocity.x = dir.x * alarmed_speed
+	velocity.z = dir.z * alarmed_speed
 	apply_gravity()
 	move_and_slide()
 
 
 func attack_loop() -> void:
-	var dir = global_position.direction_to(player.global_position)
+	var dir := global_position.direction_to(player.global_position)
 	rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z) + PI, turn_speed_weight)
 
 
@@ -141,7 +139,7 @@ func apply_gravity() -> void:
 
 func attack() -> void:
 	if player in attack_hit_area.get_overlapping_bodies():
-		EventSystem.PLA_change_health.emit(-damage)
+		EventSystem.health_change_requested.emit(-damage)
 
 
 func look_forward() -> void:
@@ -173,7 +171,7 @@ func player_in_los() -> bool:
 	var query_params := PhysicsRayQueryParameters3D.new()
 	query_params.from = eyes_marker.global_position
 	query_params.to = player.global_position + Vector3(0, 1.5, 0)
-	query_params.collision_mask = 1 # environment
+	query_params.collision_mask = 1 # ground layer
 	var space_state := get_world_3d().direct_space_state
 	var result := space_state.intersect_ray(query_params)
 	
@@ -206,7 +204,7 @@ func pick_away_from_player_velocity() -> void:
 	velocity = dir.normalized() * alarmed_speed
 
 
-func set_state(new_state : States) -> void:
+func set_state(new_state: States) -> void:
 	state = new_state
 	
 	match state:
@@ -246,16 +244,16 @@ func set_state(new_state : States) -> void:
 			main_collision_shape.disabled = true
 			animation_player.play("Death", ANIM_BLEND_TIME)
 			var meat_scene := ItemConfig.get_pickuppable_item_scene(ItemConfig.Keys.RawMeat)
-			EventSystem.SPA_spawn_scene.emit(meat_scene, meat_spawn_marker.global_transform)
+			EventSystem.scene_spawn_requested.emit(meat_scene, meat_spawn_marker.global_transform, false)
 			set_physics_process(false)
 			disappear_after_death_timer.start()
 
 
 func play_attack_audio() -> void:
-	EventSystem.SFX_play_dynamic_sfx.emit(attack_audio_key, global_position)
+	Audio.play_sfx_at(attack_audio_key, global_position)
 
 
-func take_hit(weapon_item_resource : WeaponItemResource) -> void:
+func take_hit(weapon_item_resource: WeaponItemResource) -> void:
 	health -= weapon_item_resource.damage
 	if state != States.Dead and health <= 0:
 		set_state(States.Dead)

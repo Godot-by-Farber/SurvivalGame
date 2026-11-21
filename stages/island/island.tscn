@@ -1,21 +1,22 @@
-[gd_scene load_steps=72 format=3 uid="uid://tlch14isqovy"]
+[gd_scene format=3 uid="uid://tlch14isqovy"]
 
 [ext_resource type="Script" uid="uid://dbv0ybw84py56" path="res://stages/stage.gd" id="1_7cv84"]
 [ext_resource type="PackedScene" uid="uid://bjpk8ioxilyen" path="res://meshes/terrain.tscn" id="1_7gkuu"]
-[ext_resource type="Script" uid="uid://c3j1jq2k18wp" path="res://addons/proton_scatter/src/scatter.gd" id="2_1mcol"]
+[ext_resource type="Script" uid="uid://dgqq1tf8prx5s" path="res://addons/proton_scatter/src/scatter.gd" id="2_1mcol"]
+[ext_resource type="Script" uid="uid://6mvg0gb77knh" path="res://addons/proton_scatter/src/cache/scatter_cache.gd" id="99_scache"]
 [ext_resource type="Script" uid="uid://dnktrs6cnxmli" path="res://stages/island/nav_region.gd" id="2_4s63g"]
-[ext_resource type="Script" uid="uid://bhlioqo1v4bs4" path="res://addons/proton_scatter/src/stack/modifier_stack.gd" id="3_c6luv"]
-[ext_resource type="Script" uid="uid://dmcvjgwc4ylww" path="res://addons/proton_scatter/src/modifiers/create_inside_random.gd" id="4_cyyiw"]
-[ext_resource type="Script" uid="uid://srs0y0nqknl7" path="res://addons/proton_scatter/src/modifiers/randomize_rotation.gd" id="5_up0eu"]
+[ext_resource type="Script" uid="uid://ba8jou0xje0c7" path="res://addons/proton_scatter/src/stack/modifier_stack.gd" id="3_c6luv"]
+[ext_resource type="Script" uid="uid://gjjh4mw1wn51" path="res://addons/proton_scatter/src/modifiers/create_inside_random.gd" id="4_cyyiw"]
+[ext_resource type="Script" uid="uid://cloqmhjellss0" path="res://addons/proton_scatter/src/modifiers/randomize_rotation.gd" id="5_up0eu"]
 [ext_resource type="PackedScene" uid="uid://bb4ajqrspiuc8" path="res://actors/player/player.tscn" id="5_xxhwd"]
-[ext_resource type="Script" uid="uid://b8jjvs6pqkd3i" path="res://addons/proton_scatter/src/modifiers/base_modifier.gd" id="6_1rmbq"]
-[ext_resource type="Script" uid="uid://dxfvilqxpvkac" path="res://addons/proton_scatter/src/modifiers/project_on_geometry.gd" id="6_48jve"]
-[ext_resource type="Script" uid="uid://oluvqk24854n" path="res://addons/proton_scatter/src/scatter_item.gd" id="7_23s1g"]
-[ext_resource type="Script" uid="uid://pldavw2wmr6t" path="res://addons/proton_scatter/src/modifiers/relax.gd" id="7_u8jsq"]
-[ext_resource type="Script" uid="uid://p6wxiw6btyx" path="res://addons/proton_scatter/src/scatter_shape.gd" id="8_ufojg"]
-[ext_resource type="Script" uid="uid://dona4dhqndysh" path="res://addons/proton_scatter/src/shapes/box_shape.gd" id="9_24uf2"]
+[ext_resource type="Script" uid="uid://b5s7ggmsi8g5u" path="res://addons/proton_scatter/src/modifiers/base_modifier.gd" id="6_1rmbq"]
+[ext_resource type="Script" uid="uid://it6ja2wjneak" path="res://addons/proton_scatter/src/modifiers/project_on_geometry.gd" id="6_48jve"]
+[ext_resource type="Script" uid="uid://c85i0481q4uog" path="res://addons/proton_scatter/src/scatter_item.gd" id="7_23s1g"]
+[ext_resource type="Script" uid="uid://dc4rwlje6dfca" path="res://addons/proton_scatter/src/modifiers/relax.gd" id="7_u8jsq"]
+[ext_resource type="Script" uid="uid://dx7e7heldjwmg" path="res://addons/proton_scatter/src/scatter_shape.gd" id="8_ufojg"]
+[ext_resource type="Script" uid="uid://devkng6iaf5do" path="res://addons/proton_scatter/src/shapes/box_shape.gd" id="9_24uf2"]
 [ext_resource type="PackedScene" uid="uid://jckten4tubwg" path="res://actors/animals/cow.tscn" id="10_tmgvu"]
-[ext_resource type="Script" uid="uid://dk0mnuopmjpkt" path="res://addons/proton_scatter/src/modifiers/randomize_transforms.gd" id="11_fx1dp"]
+[ext_resource type="Script" uid="uid://b0332hlb7q5t1" path="res://addons/proton_scatter/src/modifiers/randomize_transforms.gd" id="11_fx1dp"]
 [ext_resource type="PackedScene" uid="uid://bx6mp6l5hcxop" path="res://meshes/water.tscn" id="11_pp73j"]
 [ext_resource type="PackedScene" uid="uid://bd6xdiisrxhdd" path="res://actors/animals/wolf.tscn" id="11_qpcsv"]
 [ext_resource type="Script" uid="uid://cck63jpjb1dbs" path="res://game/managers/spawner.gd" id="13_kwidf"]
@@ -618,11 +619,12 @@ _data = {
 &"day_night_cycle": SubResource("Animation_q8bqo")
 }
 
-[node name="Island" type="Node" node_paths=PackedStringArray("scatter_nodes")]
+[node name="Island" type="Node" node_paths=PackedStringArray("scatter_nodes", "scatter_cache")]
 process_mode = 1
 script = ExtResource("1_7cv84")
 music_to_play = 0
 scatter_nodes = [NodePath("NavigationRegion3D/ScatterTrees"), NodePath("NavigationRegion3D/ScatterFruitBushes"), NodePath("NavigationRegion3D/ScatterCoalBoulders"), NodePath("NavigationRegion3D/ScatterFlintstoneBoulders"), NodePath("Items/ScatterMushrooms"), NodePath("Items/ScatterSticksStonesPlants"), NodePath("Items/ScatterGrass")]
+scatter_cache = NodePath("ScatterCache")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_cgc8o")
@@ -637,6 +639,7 @@ shape = SubResource("ConcavePolygonShape3D_rqk8d")
 
 [node name="ScatterTrees" type="Node3D" parent="NavigationRegion3D"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 render_mode = 1
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_hw424")
@@ -654,6 +657,7 @@ shape = SubResource("Resource_i5qsk")
 
 [node name="ScatterFruitBushes" type="Node3D" parent="NavigationRegion3D"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 render_mode = 1
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_qhq23")
@@ -671,6 +675,7 @@ shape = SubResource("Resource_xo0lh")
 
 [node name="ScatterCoalBoulders" type="Node3D" parent="NavigationRegion3D"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 render_mode = 1
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_xvrif")
@@ -688,6 +693,7 @@ shape = SubResource("Resource_l354n")
 
 [node name="ScatterFlintstoneBoulders" type="Node3D" parent="NavigationRegion3D"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 render_mode = 1
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_1c4c7")
@@ -732,6 +738,7 @@ constructable_holder = NodePath("../NavigationRegion3D/ConstructableHolder")
 
 [node name="ScatterMushrooms" type="Node3D" parent="Items"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 render_mode = 1
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_uc2mi")
@@ -749,6 +756,7 @@ shape = SubResource("Resource_ojll8")
 
 [node name="ScatterSticksStonesPlants" type="Node3D" parent="Items"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 render_mode = 1
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_8u5ff")
@@ -774,6 +782,7 @@ shape = SubResource("Resource_ovsft")
 
 [node name="ScatterGrass" type="Node3D" parent="Items"]
 script = ExtResource("2_1mcol")
+force_rebuild_on_load = false
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_mh2wp")
 Performance/use_chunks = true
@@ -831,3 +840,7 @@ libraries = {
 autoplay = "day_night_cycle"
 speed_scale = 0.02
 script = ExtResource("17_5bael")
+
+[node name="ScatterCache" type="Node" parent="."]
+script = ExtResource("99_scache")
+cache_file = "res://stages/island/island_scatter_cache.res"

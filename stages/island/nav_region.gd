@@ -2,4 +2,4 @@ extends NavigationRegion3D
 
 
 func _enter_tree() -> void:
-	EventSystem.GAM_update_navmesh.connect(bake_navigation_mesh)
+	EventSystem.navmesh_rebake_requested.connect(bake_navigation_mesh)

@@ -1,20 +1,23 @@
 extends Node
 class_name SleepManager
+## Runs the sleep sequence: fade out, skip time, fade back in.
+
+const FADE_IN_TIME := 2.0
+const FADE_OUT_TIME := 1.0
+const HOURS_SLEPT := 8.0
+const BLACK_SCREEN_TIME := 1.5
 
 
 func _enter_tree() -> void:
-	EventSystem.PLA_player_sleep.connect(start_sleep_sequence)
+	EventSystem.sleep_requested.connect(_on_sleep_requested)
 
 
-func start_sleep_sequence() -> void:
-	EventSystem.PLA_freeze_player.emit()
-	EventSystem.GAM_game_fade_in.emit(2, game_faded_in)
+func _on_sleep_requested() -> void:
+	EventSystem.player_freeze_requested.emit(true)
+	await Fade.fade_in(FADE_IN_TIME)
 
+	EventSystem.time_skip_requested.emit(HOURS_SLEPT)
+	await get_tree().create_timer(BLACK_SCREEN_TIME).timeout
 
-func game_faded_in() -> void:
-	EventSystem.GAM_fast_forward_day_night_anim.emit(8)
-	
-	await get_tree().create_timer(1.5).timeout
-	
-	EventSystem.PLA_unfreeze_player.emit()
-	EventSystem.GAM_game_fade_out.emit(1)
+	EventSystem.player_freeze_requested.emit(false)
+	Fade.fade_out(FADE_OUT_TIME)
