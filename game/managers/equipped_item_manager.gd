@@ -1,46 +1,51 @@
 extends Node
 class_name EquippedItemManager
+## Tracks which hotbar slot is active and equips or unequips items in response to hotkeys.
 
+const NO_SLOT := -1
 
-var active_slot
-var hotbar:Array
+var active_slot := NO_SLOT
+var hotbar: Array = []
 
 
 func _enter_tree() -> void:
-	EventSystem.INV_hotbar_updated.connect(hotbar_updated)
-	EventSystem.EQU_hotkey_pressed.connect(hotkey_pressed)
-	EventSystem.EQU_delete_equipped_item.connect(delete_equipped_item)
+	EventSystem.hotbar_updated.connect(_on_hotbar_updated)
+	EventSystem.hotkey_pressed.connect(_on_hotkey_pressed)
+	EventSystem.equipped_item_used_up.connect(_on_equipped_item_used_up)
 
 
 func _ready() -> void:
-	EventSystem.EQU_active_hotbar_slot_updated.emit(null)
+	EventSystem.active_hotbar_slot_changed.emit(NO_SLOT)
 
 
-func hotbar_updated(_hotbar:Array) -> void:
-	hotbar = _hotbar
-	
-	if active_slot != null and hotbar[active_slot] == null:
-		EventSystem.EQU_unequip_item.emit()
-		active_slot = null
+func _on_hotbar_updated(new_hotbar: Array) -> void:
+	hotbar = new_hotbar
+
+	if active_slot != NO_SLOT and hotbar[active_slot] == null:
+		active_slot = NO_SLOT
+		EventSystem.item_unequipped.emit()
 
 
-func hotkey_pressed(hotkey:int) -> void:
-	var hotkey_index := hotkey - 1
-	
-	if hotbar[hotkey_index] == null:
+func _on_hotkey_pressed(slot_number: int) -> void:
+	var index := slot_number - 1
+
+	if index < 0 or index >= hotbar.size() or hotbar[index] == null:
 		return
-	
-	if hotkey_index != active_slot:
-		active_slot = hotkey_index
-		EventSystem.EQU_equip_item.emit(hotbar[hotkey_index])
-		EventSystem.EQU_active_hotbar_slot_updated.emit(hotkey_index)
-	
-	else:
-		active_slot = null
-		EventSystem.EQU_unequip_item.emit()
+
+	if index == active_slot:
+		active_slot = NO_SLOT
+		EventSystem.item_unequipped.emit()
+		return
+
+	active_slot = index
+	EventSystem.item_equipped.emit(hotbar[index])
+	EventSystem.active_hotbar_slot_changed.emit(index)
 
 
-func delete_equipped_item() -> void:
-	EventSystem.INV_delete_item_by_index.emit(active_slot, true)
-	EventSystem.EQU_active_hotbar_slot_updated.emit(null)
-	active_slot = null
+func _on_equipped_item_used_up() -> void:
+	if active_slot == NO_SLOT:
+		return
+
+	EventSystem.slot_clear_requested.emit(active_slot, true)
+	EventSystem.active_hotbar_slot_changed.emit(NO_SLOT)
+	active_slot = NO_SLOT

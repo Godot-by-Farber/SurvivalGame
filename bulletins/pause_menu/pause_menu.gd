@@ -2,7 +2,7 @@ extends FadingBulletin
 class_name PauseMenu
 
 
-const BUTTON_FADE_TIME = 0.15
+const BUTTON_FADE_TIME := 0.15
 
 @onready var resume_button: Button = $VBoxContainer/ResumeButton
 @onready var settings_button: Button = $VBoxContainer/SettingsButton
@@ -16,7 +16,7 @@ func _ready() -> void:
 	
 	get_tree().paused = true
 	
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.UIClick)
+	Audio.play_sfx(SFXConfig.Keys.UIClick)
 	
 	super()
 
@@ -31,16 +31,16 @@ func fade_in() -> void:
 
 
 func _on_resume_button_pressed() -> void:
-	EventSystem.HUD_show_hud.emit()
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	EventSystem.hud_visibility_requested.emit(true)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	get_tree().paused = false
 	fade_out()
 
 
 func _on_settings_button_pressed() -> void:
-	EventSystem.BUL_create_bulletin.emit(BulletinConfig.Keys.SettingsMenu, true)
+	Bulletins.create(BulletinConfig.Keys.SettingsMenu, true)
 	fade_out()
 
 
 func _on_exit_button_pressed() -> void:
-	EventSystem.STA_change_stage.emit(StageConfig.Keys.MainMenu)
+	Stages.change_stage(StageConfig.Keys.MainMenu)

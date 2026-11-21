@@ -1,15 +1,15 @@
 extends EquippableItem
 class_name EquippableConsumable
 
-var consumable_item_resource:ConsumableItemResource
+var consumable_item_resource: ConsumableItemResource
 
 
 func consume() -> void:
-	EventSystem.PLA_change_health.emit(consumable_item_resource.health_change)
-	EventSystem.PLA_change_energy.emit(consumable_item_resource.energy_change)
-	EventSystem.EQU_delete_equipped_item.emit()
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.Eat)
+	EventSystem.health_change_requested.emit(consumable_item_resource.health_change)
+	EventSystem.energy_change_requested.emit(consumable_item_resource.energy_change)
+	EventSystem.equipped_item_used_up.emit()
+	Audio.play_sfx(SFXConfig.Keys.Eat)
 
 
 func destroy_self() -> void:
-	EventSystem.EQU_unequip_item.emit()
+	EventSystem.item_unequipped.emit()

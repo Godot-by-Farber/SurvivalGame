@@ -16,19 +16,20 @@ class_name SettingsMenu
 var open_pause_menu_after_closing := false
 
 
-func initialize(_open_pause_menu_after_closing : bool) -> void:
-	open_pause_menu_after_closing = _open_pause_menu_after_closing
+## [param arg] is true when the menu was opened from the pause menu.
+func initialize(arg: Variant) -> void:
+	open_pause_menu_after_closing = arg == true
 
 
 func _ready() -> void:
-	EventSystem.SET_ask_settings_resource.emit(set_settings_visuals)
-	
+	_show_current_settings(Settings.resource)
+
 	music_volume_slider.value_changed.connect(_on_music_volume_slider_value_changed)
 	sfx_volume_slider.value_changed.connect(_on_sfx_volume_slider_value_changed)
 	resolution_scale_slider.value_changed.connect(_on_resolution_scale_slider_value_changed)
 	ssaa_check_button.toggled.connect(_on_ssaa_check_button_toggled)
 	fullscreen_check_button.toggled.connect(_on_fullscreen_check_button_toggled)
-	
+
 	super()
 
 
@@ -36,63 +37,52 @@ func fade_in() -> void:
 	create_tween().tween_property(background, "color", BG_NORMAL_COLOR, BG_FADE_TIME / 2.0)
 
 
-func set_settings_visuals(settings_resource : SettingsResource) -> void:
-	update_music_volume_label(settings_resource.music_volume)
-	music_volume_slider.value = settings_resource.music_volume
-	
-	update_sfx_volume_label(settings_resource.sfx_volume)
-	sfx_volume_slider.value = settings_resource.sfx_volume
-	
-	update_res_scale_label(settings_resource.res_scale)
-	resolution_scale_slider.value = settings_resource.res_scale
-	
-	ssaa_check_button.button_pressed = settings_resource.ssaa_enabled
-	
-	fullscreen_check_button.button_pressed = settings_resource.fullscreen_enabled
+func _show_current_settings(settings: SettingsResource) -> void:
+	music_volume_slider.value = settings.music_volume
+	_set_percent_label(music_volume_label, settings.music_volume)
+
+	sfx_volume_slider.value = settings.sfx_volume
+	_set_percent_label(sfx_volume_label, settings.sfx_volume)
+
+	resolution_scale_slider.value = settings.res_scale
+	_set_percent_label(resolution_scale_label, settings.res_scale)
+
+	ssaa_check_button.button_pressed = settings.ssaa_enabled
+	fullscreen_check_button.button_pressed = settings.fullscreen_enabled
+
+
+func _set_percent_label(label: Label, value: float) -> void:
+	label.text = "%d %%" % roundi(value * 100)
 
 
 func _on_music_volume_slider_value_changed(value: float) -> void:
-	EventSystem.SET_music_volume_changed.emit(value)
-	update_music_volume_label(value)
-
-func update_music_volume_label(value: float) -> void:
-	music_volume_label.text = str(snappedi(value * 100, 1)) + " %"
+	Settings.set_music_volume(value)
+	_set_percent_label(music_volume_label, value)
 
 
 func _on_sfx_volume_slider_value_changed(value: float) -> void:
-	EventSystem.SET_sfx_volume_changed.emit(value)
-	update_sfx_volume_label(value)
-
-func update_sfx_volume_label(value: float) -> void:
-	sfx_volume_label.text = str(snappedi(value * 100, 1)) + " %"
+	Settings.set_sfx_volume(value)
+	_set_percent_label(sfx_volume_label, value)
 
 
 func _on_resolution_scale_slider_value_changed(value: float) -> void:
-	EventSystem.SET_res_scale_changed.emit(value)
-	update_res_scale_label(value)
-
-func update_res_scale_label(value: float) -> void:
-	resolution_scale_label.text = str(snappedi(value * 100, 1)) + " %"
+	Settings.set_res_scale(value)
+	_set_percent_label(resolution_scale_label, value)
 
 
 func _on_ssaa_check_button_toggled(toggled_on: bool) -> void:
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.UIClick)
-	EventSystem.SET_ssaa_changed.emit(toggled_on)
+	Audio.play_sfx(SFXConfig.Keys.UIClick)
+	Settings.set_ssaa(toggled_on)
 
 
 func _on_fullscreen_check_button_toggled(toggled_on: bool) -> void:
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.UIClick)
-	EventSystem.SET_fullscreen_changed.emit(toggled_on)
+	Audio.play_sfx(SFXConfig.Keys.UIClick)
+	Settings.set_fullscreen(toggled_on)
 
 
 func _on_close_button_pressed() -> void:
 	fade_out()
-	
-	EventSystem.SET_save_settings.emit()
-	
+	Settings.save()
+
 	if open_pause_menu_after_closing:
-		EventSystem.BUL_create_bulletin.emit(BulletinConfig.Keys.PauseMenu)
-
-
-func destroy_self() -> void:
-	EventSystem.BUL_destroy_bulletin.emit(BulletinConfig.Keys.SettingsMenu)
+		Bulletins.create(BulletinConfig.Keys.PauseMenu)

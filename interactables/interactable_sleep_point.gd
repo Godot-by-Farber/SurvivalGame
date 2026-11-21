@@ -3,5 +3,5 @@ class_name InteractableSleepPoint
 
 
 func start_interaction() -> void:
-	EventSystem.PLA_player_sleep.emit()
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.GoInTent)
+	EventSystem.sleep_requested.emit()
+	Audio.play_sfx(SFXConfig.Keys.GoInTent)

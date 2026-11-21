@@ -3,8 +3,8 @@ class_name UIButton
 
 
 func _ready() -> void:
-	pressed.connect(clicked)
+	pressed.connect(_on_pressed)
 
 
-func clicked() -> void:
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.UIClick)
+func _on_pressed() -> void:
+	Audio.play_sfx(SFXConfig.Keys.UIClick)

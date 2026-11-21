@@ -1,19 +1,18 @@
 class_name StageConfig
 
 
-enum Keys{
+enum Keys {
 	Island,
 	MainMenu,
-	Credits
+	Credits,
+}
+
+const STAGE_PATHS: Dictionary[Keys, String] = {
+	Keys.Island: "res://stages/island/island.tscn",
+	Keys.MainMenu: "res://stages/main_menu/main_menu.tscn",
+	Keys.Credits: "res://stages/credits/credits_stage.tscn",
 }
 
 
-static func get_stage(stage_key:Keys) -> Stage:
-	return load(STAGE_PATHS[stage_key]).instantiate()
-
-
-const STAGE_PATHS := {
-	Keys.Island : "res://stages/island/island.tscn",
-	Keys.MainMenu : "res://stages/main_menu/main_menu.tscn",
-	Keys.Credits : "res://stages/credits/credits_stage.tscn"
-}
+static func get_stage_path(key: Keys) -> String:
+	return STAGE_PATHS[key]

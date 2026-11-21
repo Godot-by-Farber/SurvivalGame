@@ -1,18 +1,19 @@
-[gd_scene load_steps=46 format=3 uid="uid://cx0vclsk2g8b6"]
+[gd_scene format=3 uid="uid://cx0vclsk2g8b6"]
 
 [ext_resource type="Script" uid="uid://dkii6278sf3fv" path="res://stages/main_menu/main_menu.gd" id="1_cyl60"]
 [ext_resource type="PackedScene" uid="uid://bjpk8ioxilyen" path="res://meshes/terrain.tscn" id="1_vhgst"]
 [ext_resource type="PackedScene" uid="uid://bx6mp6l5hcxop" path="res://meshes/water.tscn" id="2_a81in"]
-[ext_resource type="Script" uid="uid://c3j1jq2k18wp" path="res://addons/proton_scatter/src/scatter.gd" id="3_6vd8v"]
-[ext_resource type="Script" uid="uid://bhlioqo1v4bs4" path="res://addons/proton_scatter/src/stack/modifier_stack.gd" id="4_rolah"]
-[ext_resource type="Script" uid="uid://dmcvjgwc4ylww" path="res://addons/proton_scatter/src/modifiers/create_inside_random.gd" id="5_myh3s"]
-[ext_resource type="Script" uid="uid://b8jjvs6pqkd3i" path="res://addons/proton_scatter/src/modifiers/base_modifier.gd" id="6_7w10v"]
-[ext_resource type="Script" uid="uid://pldavw2wmr6t" path="res://addons/proton_scatter/src/modifiers/relax.gd" id="6_kjdfa"]
-[ext_resource type="Script" uid="uid://dxfvilqxpvkac" path="res://addons/proton_scatter/src/modifiers/project_on_geometry.gd" id="7_ksfsk"]
-[ext_resource type="Script" uid="uid://oluvqk24854n" path="res://addons/proton_scatter/src/scatter_item.gd" id="8_m84uo"]
-[ext_resource type="Script" uid="uid://p6wxiw6btyx" path="res://addons/proton_scatter/src/scatter_shape.gd" id="9_off18"]
-[ext_resource type="Script" uid="uid://dona4dhqndysh" path="res://addons/proton_scatter/src/shapes/box_shape.gd" id="10_67yqx"]
-[ext_resource type="Script" uid="uid://srs0y0nqknl7" path="res://addons/proton_scatter/src/modifiers/randomize_rotation.gd" id="11_yctm7"]
+[ext_resource type="Script" uid="uid://dgqq1tf8prx5s" path="res://addons/proton_scatter/src/scatter.gd" id="3_6vd8v"]
+[ext_resource type="Script" uid="uid://6mvg0gb77knh" path="res://addons/proton_scatter/src/cache/scatter_cache.gd" id="99_scache"]
+[ext_resource type="Script" uid="uid://ba8jou0xje0c7" path="res://addons/proton_scatter/src/stack/modifier_stack.gd" id="4_rolah"]
+[ext_resource type="Script" uid="uid://gjjh4mw1wn51" path="res://addons/proton_scatter/src/modifiers/create_inside_random.gd" id="5_myh3s"]
+[ext_resource type="Script" uid="uid://b5s7ggmsi8g5u" path="res://addons/proton_scatter/src/modifiers/base_modifier.gd" id="6_7w10v"]
+[ext_resource type="Script" uid="uid://dc4rwlje6dfca" path="res://addons/proton_scatter/src/modifiers/relax.gd" id="6_kjdfa"]
+[ext_resource type="Script" uid="uid://it6ja2wjneak" path="res://addons/proton_scatter/src/modifiers/project_on_geometry.gd" id="7_ksfsk"]
+[ext_resource type="Script" uid="uid://c85i0481q4uog" path="res://addons/proton_scatter/src/scatter_item.gd" id="8_m84uo"]
+[ext_resource type="Script" uid="uid://dx7e7heldjwmg" path="res://addons/proton_scatter/src/scatter_shape.gd" id="9_off18"]
+[ext_resource type="Script" uid="uid://devkng6iaf5do" path="res://addons/proton_scatter/src/shapes/box_shape.gd" id="10_67yqx"]
+[ext_resource type="Script" uid="uid://cloqmhjellss0" path="res://addons/proton_scatter/src/modifiers/randomize_rotation.gd" id="11_yctm7"]
 [ext_resource type="PackedScene" uid="uid://kaxfsetth143" path="res://meshes/tent.tscn" id="12_plss7"]
 [ext_resource type="PackedScene" uid="uid://dhxy8ff4f1cs8" path="res://meshes/campfire.tscn" id="13_xj120"]
 [ext_resource type="Texture2D" uid="uid://p4440xbx3wxh" path="res://textures/circle32.png" id="14_22633"]
@@ -201,10 +202,11 @@ particles_anim_loop = false
 material = SubResource("StandardMaterial3D_4d68m")
 size = Vector2(0.1, 0.1)
 
-[node name="MainMenu" type="Node" node_paths=PackedStringArray("scatter_nodes")]
+[node name="MainMenu" type="Node" node_paths=PackedStringArray("scatter_nodes", "scatter_cache")]
 script = ExtResource("1_cyl60")
 show_mouse = true
 scatter_nodes = [NodePath("Island/ScatterTrees"), NodePath("Island/ScatterGrass")]
+scatter_cache = NodePath("ScatterCache")
 
 [node name="Island" type="Node3D" parent="."]
 
@@ -222,6 +224,7 @@ environment = SubResource("Environment_dek17")
 
 [node name="ScatterTrees" type="Node3D" parent="Island"]
 script = ExtResource("3_6vd8v")
+force_rebuild_on_load = false
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_ey7cm")
 Performance/use_chunks = true
@@ -238,6 +241,7 @@ shape = SubResource("Resource_wpjug")
 
 [node name="ScatterGrass" type="Node3D" parent="Island"]
 script = ExtResource("3_6vd8v")
+force_rebuild_on_load = false
 dbg_disable_thread = true
 modifier_stack = SubResource("Resource_6fr50")
 Performance/use_chunks = true
@@ -340,6 +344,11 @@ size_flags_horizontal = 4
 focus_mode = 0
 text = "Exit"
 script = ExtResource("21_6lk22")
+
+
+[node name="ScatterCache" type="Node" parent="."]
+script = ExtResource("99_scache")
+cache_file = "res://stages/main_menu/main_menu_scatter_cache.res"
 
 [connection signal="pressed" from="MainMenuUI/VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="MainMenuUI/VBoxContainer/SettingsButton" to="." method="_on_settings_button_pressed"]

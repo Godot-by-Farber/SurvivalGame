@@ -8,9 +8,9 @@ class_name InteractionPrompt
 var prompt_text := ""
 
 
-func initialize(prompt) -> void:
-	if prompt is String:
-		prompt_text = "E\n" + prompt
+func initialize(arg: Variant) -> void:
+	if arg is String:
+		prompt_text = "E\n" + arg
 
 
 func _ready() -> void:

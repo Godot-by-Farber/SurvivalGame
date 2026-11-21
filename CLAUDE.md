@@ -4,27 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a 3D survival game built in Godot 4.4 following a course by Eerik Hirvonen. The game features resource gathering, crafting, construction, and survival mechanics on an island setting.
+This is a 3D survival game built in Godot 4.7 following a course by Eerik Hirvonen. The game features resource gathering, crafting, construction, and survival mechanics on an island setting.
 
 ## Development Commands
 
 Since this is a Godot project, development is primarily done through the Godot editor rather than command line tools. The project uses:
 
-- **Engine**: Godot 4.4 (Forward Plus rendering)
+- **Engine**: Godot 4.7 (Forward Plus rendering)
 - **Main Scene**: `res://game/main_game.tscn`
 - **Project Config**: `project.godot` contains input maps and layer configurations
 
 ## Code Architecture
 
-### Signal-Based Event System
-The game uses a centralized event system (`game/event_system.gd`) that acts as a global autoload. All major game systems communicate through signals with specific prefixes:
-- `BUL_*` - Bulletin/UI system
-- `INV_*` - Inventory system
-- `PLA_*` - Player actions and stats
-- `EQU_*` - Equipment system
-- `SFX_*` - Sound effects
-- `MUS_*` - Music system
-- `STA_*` - Stage/scene management
+### Autoloads (`game/autoloads/`)
+Game-wide services are autoload singletons called directly:
+- `Audio` - `play_sfx()`, `play_sfx_at()`, `play_music()`
+- `Settings` - settings resource, setters, `save()`
+- `Fade` - `await fade_in()` / `await fade_out()` (scene autoload `fade.tscn`)
+- `Bulletins` - `create(key, arg)`, `destroy(key)`, `destroy_all()`
+- `Stages` - `change_stage(key)`; loads the stage on a background thread during the fade
+
+### Event Bus (`game/autoloads/event_system.gd`)
+`EventSystem` holds typed signals with named params, grouped by domain (Inventory, Player,
+Equipment, World, HUD). `*_requested` signals are commands; past-tense signals are notifications.
+Only cross-object gameplay events go here. Never add signals for the services above.
+Some methods are called by name from scenes (signal connections, AnimationPlayer method tracks,
+e.g. `check_hit`, `consume`, `destroy_self`, `try_to_construct`), so rename them in the `.tscn` files too.
 
 ### Core Systems
 
@@ -54,17 +59,15 @@ The game uses a centralized event system (`game/event_system.gd`) that acts as a
 - Uses Area3D for interaction detection
 
 ### Manager Pattern
-Game uses multiple manager classes in `game/managers/`:
+Per-run managers in `game/managers/` live in the Player and Island scenes:
 - `InventoryManager` - Item storage and manipulation
 - `EquippedItemManager` - Currently held items
 - `PlayerStatsManager` - Health, energy tracking
-- `BulletinController` - UI state management
-- `SFXController` - Audio management
-- `StageController` - Scene transitions
+- `SleepManager`, `Spawner`, `HUDController`, `DayNightCycleAnimationPlayer`
 
 ### UI System (`bulletins/`)
 The game uses a "bulletin" system for UI management:
-- `BulletinController` creates/destroys UI panels
+- The `Bulletins` autoload creates/destroys UI panels and sets each one's `bulletin_key`
 - Player menus inherit from `PlayerMenuBase`
 - Includes crafting, cooking, settings, and pause menus
 
@@ -81,8 +84,11 @@ Defined in `project.godot`:
 
 ## Third-Party Addons
 
-**Proton Scatter** (`addons/proton_scatter/`)
+**Proton Scatter** (`addons/proton_scatter/`, upstream main 7198cc0)
 - Used for procedural placement of foliage and environmental objects
+- Scatter nodes don't rebuild at runtime; a `ScatterCache` node per stage restores them from
+  `stages/*/*_scatter_cache.res` (refreshed on scene save in the editor). Generating it needs a GPU:
+  the Relax modifier falls back to an O(n²) CPU path in `--headless` mode
 - Provides modifier-based scattering system
 - Includes various creation and transformation modifiers
 

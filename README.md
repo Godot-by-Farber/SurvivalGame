@@ -18,42 +18,55 @@ Not an official repo, here I am just following the Godot course by [Eerik Hirvon
 
 ## Project Overview
 
-This is a 3D survival game built in Godot 4.4 following a course by Eerik Hirvonen. The game features resource gathering, crafting, construction, and survival mechanics on an island setting.
+This is a 3D survival game built in Godot 4.7 following a course by Eerik Hirvonen. The game features resource gathering, crafting, construction, and survival mechanics on an island setting.
 
 ### Project Statistics
 - **Total Custom Files**: 143 (excluding addons)
 - **GDScript Classes**: 46 custom classes
 - **Scene Files**: 58 .tscn files
 - **Resource Files**: 39 .tres resources
-- **Engine**: Godot 4.4 (Forward Plus)
+- **Engine**: Godot 4.7 (Forward Plus)
 - **Main Scene**: `res://game/main_game.tscn`
 
 ---
 
 ## Architecture Overview
 
-### Central Event System (Signal Bus)
-**File**: `game/event_system.gd`
+### Autoload Singletons
+**Folder**: `game/autoloads/`
 
-The game uses a centralized event system that acts as a global autoload. All major game systems communicate through 41 signals with specific prefixes:
+Game-wide services are autoloads that you call directly:
 
-- **BUL_*** - Bulletin/UI system (5 signals)
-- **INV_*** - Inventory system (9 signals)
-- **PLA_*** - Player actions and stats (5 signals)
-- **EQU_*** - Equipment system (4 signals)
-- **SFX_*** - Sound effects (2 signals)
-- **MUS_*** - Music system (1 signal)
-- **STA_*** - Stage/scene management (1 signal)
-- **GAM_*** - Game state (4 signals)
-- **HUD_*** - HUD visibility (2 signals)
-- **SET_*** - Settings (6 signals)
-- **SPA_*** - Spawning system (2 signals)
+| Autoload | File | API |
+|----------|------|-----|
+| **EventSystem** | `event_system.gd` | Typed signal bus for gameplay events (see below) |
+| **Settings** | `settings.gd` | `resource`, `set_music_volume()`, `set_sfx_volume()`, `set_res_scale()`, `set_ssaa()`, `set_fullscreen()`, `save()` |
+| **Audio** | `audio.gd` | `play_sfx(key)`, `play_sfx_at(key, position, pitch_randomness)`, `play_music(key)` |
+| **Fade** | `fade.tscn` / `fade.gd` | `await fade_in(duration, show_loading_label)`, `await fade_out(duration)` |
+| **Bulletins** | `bulletins.gd` | `create(key, arg)`, `destroy(key)`, `destroy_all()`, `is_open(key)` |
+| **Stages** | `stages.gd` | `change_stage(key)`, `current_stage` |
+
+```gdscript
+Audio.play_sfx(SFXConfig.Keys.UIClick)
+Bulletins.create(BulletinConfig.Keys.PauseMenu)
+Stages.change_stage(StageConfig.Keys.Island)
+```
+
+### Event Bus (Typed Signals)
+**File**: `game/autoloads/event_system.gd`
+
+Gameplay systems that should not know about each other (player, inventory, HUD, world)
+talk through typed signals with named parameters, grouped by domain
+(Inventory, Player, Equipment, World, HUD):
+
+- `*_requested` signals are commands, e.g. `pickup_requested(item_key, on_picked_up)`, `energy_change_requested(amount)`
+- Past-tense signals are notifications, e.g. `inventory_updated(inventory)`, `health_updated(max_health, health)`
 
 ### Key Architectural Patterns
 
-1. **Signal-Based Decoupling** - All systems communicate via EventSystem, eliminating direct dependencies between game systems
+1. **Services + Events** - Game-wide services are autoload singletons; gameplay objects stay decoupled through typed EventSystem signals
 2. **Configuration-Based Design** - Enum registries (ItemConfig, BulletinConfig, StageConfig) for centralized asset management
-3. **Manager Pattern** - 12 singleton managers for different systems with clear separation of concerns
+3. **Manager Pattern** - Per-run managers live on the Player/Island scenes, with clear separation of concerns
 4. **Resource-Based Content** - All items defined as .tres resources for data-driven development
 5. **Scene Composition** - Templates for common patterns (pickuppables, equippables, hittables)
 6. **State Machines** - Used for animal AI behavior, player states, and equipment states
@@ -256,22 +269,17 @@ Maps item keys to resource files and scene paths for centralized asset managemen
 
 ### 5. Game Managers (`game/managers/`)
 
-**12 singleton managers** for different systems:
+Per-run managers live inside the Player and Island scenes, so their state resets with every new game.
+The game-wide services are autoloads (see [Autoload Singletons](#autoload-singletons)).
 
 | Manager | File | Responsibility |
 |---------|------|-----------------|
-| **BulletinController** | `bulletin_controller.gd` | UI panel lifecycle (create/destroy) |
 | **InventoryManager** | `inventory_manager.gd` | Item storage and manipulation |
 | **EquippedItemManager** | `equipped_item_manager.gd` | Active item hotbar management |
 | **PlayerStatsManager** | `player_stats_manager.gd` | Health/energy tracking (max 100 each) |
-| **StageController** | `stage_controller.gd` | Scene loading/transitions |
-| **SFXController** | `sfx_controller.gd` | Sound effects playback |
-| **MusicController** | `music_controller.gd` | Music state management |
-| **SettingsController** | `settings_controller.gd` | Game settings persistence |
-| **HUDController** | `hud_controller.gd` | HUD visibility management |
-| **GameFadeController** | `game_fade_controller.gd` | Screen fade animations |
-| **DayNightCycleAnimPlayer** | `day_night_cycle_anim_player.gd` | Time progression animation |
 | **SleepManager** | `sleep_manager.gd` | Rest mechanics |
+| **HUDController** | `hud_controller.gd` | HUD visibility management |
+| **DayNightCycleAnimPlayer** | `day_night_cycle_anim_player.gd` | Time progression animation |
 | **Spawner** | `spawner.gd` | Scene instantiation system |
 
 #### InventoryManager
@@ -280,11 +288,9 @@ Maps item keys to resource files and scene paths for centralized asset managemen
 - Hotbar: Fixed 9 slots
 
 **Key Methods**:
-- `try_to_pickup_item()`
-- `switch_two_item_indexes()`
-- `add_item()`, `delete_item_by_index()`
-- `delete_blueprint_costs()`
-- `get_free_slots()`
+- `add_item()`, `remove_item()`, `get_free_slot_count()`
+- Reacts to `pickup_requested`, `slot_swap_requested`, `slot_clear_requested`,
+  `slot_fill_requested` and `blueprint_costs_removal_requested`
 
 #### EquippedItemManager
 **Features**:
@@ -383,7 +389,7 @@ Maps item keys to resource files and scene paths for centralized asset managemen
 **File**: `stage.gd` | **Base**: Node
 
 **Features**:
-- Proton Scatter node integration
+- Proton Scatter node integration (with an optional `ProtonScatterCache` node)
 - Music selection
 - Loading completion signal
 - Mouse visibility control
@@ -519,15 +525,25 @@ Defined in `project.godot`:
 
 ### Third-Party Addons
 
-**Proton Scatter** (`addons/proton_scatter/`)
+**Proton Scatter** (`addons/proton_scatter/`, upstream `main` at 7198cc0)
 - Used for procedural placement of foliage and environmental objects
 - Provides modifier-based scattering system
 - Includes various creation and transformation modifiers
 
+### Loading Times and the Scatter Cache
+The island and main menu scatter nodes do **not** rebuild at runtime (`force_rebuild_on_load = false`).
+Their placements are restored from the cache files `stages/island/island_scatter_cache.res` and
+`stages/main_menu/main_menu_scatter_cache.res` by a `ScatterCache` node in each scene.
+This cut the island load from ~10 s to ~0.6 s; most of the old cost was the 200,000-point grass scatter.
+
+After changing a scatter node in the editor, saving the scene refreshes the cache automatically
+(`auto_rebuild_cache_when_saving`). You can also select the `ScatterCache` node and use its rebuild button.
+If a cache file is missing, the stage falls back to rebuilding at runtime and logs a warning.
+
 ### Development Commands
 Since this is a Godot project, development is primarily done through the Godot editor rather than command line tools.
 
-**Engine**: Godot 4.4 (Forward Plus rendering)
+**Engine**: Godot 4.7 (Forward Plus rendering)
 **Main Scene**: `res://game/main_game.tscn`
 **Project Config**: `project.godot` contains input maps and layer configurations
 
@@ -553,5 +569,5 @@ Since this is a Godot project, development is primarily done through the Godot e
 
 This project was created following the Godot course by [Eerik Hirvonen](https://www.udemy.com/user/eerik-hirvonen/).
 
-**Engine**: Godot 4.4
+**Engine**: Godot 4.7
 **License**: Educational project

@@ -2,47 +2,47 @@ extends PlayerMenuBase
 class_name CraftingMenu
 
 
-@onready var craft_button_container: GridContainer = %CraftButtonContainer
+@export var craft_button_scene: PackedScene
 
-@export var craft_button_scene:PackedScene
+@onready var craft_button_container: GridContainer = %CraftButtonContainer
 
 
 func _ready() -> void:
-	for craftable_item_key in ItemConfig.CRAFTABLE_ITEM_KEYS:
-		var craft_button := craft_button_scene.instantiate()
+	for item_key in ItemConfig.CRAFTABLE_ITEM_KEYS:
+		var craft_button := craft_button_scene.instantiate() as CraftButton
 		craft_button_container.add_child(craft_button)
-		craft_button.set_item_key(craftable_item_key)
-		craft_button.button.pressed.connect(craft_button_pressed.bind(craft_button.item_key))
-	
+		craft_button.set_item_key(item_key)
+		craft_button.button.pressed.connect(_on_craft_button_pressed.bind(item_key))
+
 	super()
 
 
-func update_inventory(inventory:Array) -> void:
+func update_inventory(inventory: Array) -> void:
 	super(inventory)
-	
-	update_craft_button_disables(inventory)
+	_update_craft_buttons(inventory)
 
 
-func update_craft_button_disables(inventory:Array) -> void:
-	for craft_button in craft_button_container.get_children():
-		var crafting_blueprint := ItemConfig.get_crafting_blueprint_resource(craft_button.item_key)
-		var disable_button := false
-		
-		if crafting_blueprint.needs_multitool and not ItemConfig.Keys.Multitool in inventory:
-			disable_button = true
-		
-		elif crafting_blueprint.needs_tinderbox and not ItemConfig.Keys.Tinderbox in inventory:
-			disable_button = true
-		
-		else:
-			for cost_data in crafting_blueprint.costs:
-				if inventory.count(cost_data.item_key) < cost_data.amount:
-					disable_button = true
-					break
-		
-		craft_button.button.disabled = disable_button
+func _update_craft_buttons(inventory: Array) -> void:
+	for craft_button: CraftButton in craft_button_container.get_children():
+		var blueprint := ItemConfig.get_crafting_blueprint_resource(craft_button.item_key)
+		craft_button.button.disabled = not _can_craft(blueprint, inventory)
 
-func craft_button_pressed(item_key:ItemConfig.Keys) -> void:
-	EventSystem.INV_delete_blueprint_costs_from_inventory.emit(ItemConfig.get_crafting_blueprint_resource(item_key).costs)
-	EventSystem.INV_add_item_to_inventory.emit(item_key)
-	EventSystem.SFX_play_sfx.emit(SFXConfig.Keys.Craft)
+
+func _can_craft(blueprint: CraftingBlueprintResource, inventory: Array) -> bool:
+	if blueprint.needs_multitool and not ItemConfig.Keys.Multitool in inventory:
+		return false
+
+	if blueprint.needs_tinderbox and not ItemConfig.Keys.Tinderbox in inventory:
+		return false
+
+	for cost in blueprint.costs:
+		if inventory.count(cost.item_key) < cost.amount:
+			return false
+
+	return true
+
+
+func _on_craft_button_pressed(item_key: ItemConfig.Keys) -> void:
+	EventSystem.blueprint_costs_removal_requested.emit(ItemConfig.get_crafting_blueprint_resource(item_key).costs)
+	EventSystem.item_add_requested.emit(item_key)
+	Audio.play_sfx(SFXConfig.Keys.Craft)

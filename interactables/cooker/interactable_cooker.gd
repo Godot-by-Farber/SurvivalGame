@@ -29,15 +29,14 @@ func _ready() -> void:
 
 
 func start_interaction() -> void:
-	EventSystem.BUL_create_bulletin.emit(
-		BulletinConfig.Keys.CookingMenu,
-		[
-			cooking_recipe,
-			0 if state != CookingStates.Cooking or not cooking_recipe else (cooking_recipe.cooking_time - cooking_timer.time_left),
-			self,
-			state
-		]
-	)
+	Bulletins.create(BulletinConfig.Keys.CookingMenu, self)
+
+
+## Seconds the current recipe has been cooking, or 0 when not cooking.
+func get_time_cooked() -> float:
+	if state != CookingStates.Cooking or not cooking_recipe:
+		return 0.0
+	return cooking_recipe.cooking_time - cooking_timer.time_left
 
 
 func uncooked_item_added(recipe: CookingRecipeResource) -> void:
@@ -83,6 +82,3 @@ func cooking_finished() -> void:
 		audio_stream_player.stop()
 	
 	food_visuals_holder.add_child(cooking_recipe.cooked_item_visuals.instantiate())
-
-
-
